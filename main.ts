@@ -23,45 +23,84 @@ class CPU {
     N: number = 1;
 
     //opcodes
-    INS_LDA_IM = 0xA9; //Load Accumulator
+    static INS_LDA_IM = 0xA9; //Load Accumulator Immediate
+    static INS_LDA_ZP = 0xA5; //Load Accumulator Zero page
+    static INS_LDA_ZPX = 0xB5; //Load Accumulator Zero page x
 
-    constructor(memory: Memory){
+    constructor(memory: Memory) {
         this.memory = memory;
     }
 
-    reset(){
+    reset() {
         this.PC = 0xFFFC;
         this.SP = 0x0100;
         this.D = 0x0100;
         this.C, this.Z, this.I, this.D, this.B, this.O, this.N = 0;
-        this.A, this.X, this.Y  = 0; 
+        this.A, this.X, this.Y = 0;
     }
 
-    fetchByte(){
+    fetchByte() {
         const data = this.memory.data[this.PC];
-        this.PC ++;
+        this.PC++;
         return data;
     }
 
-    execute (cycles: number) {
+    readByte(zeroPageAddress: number) {
+        const data = this.memory.data[zeroPageAddress];
+        return data;
+    }
+
+    LDASetStatus (){
+        this.Z = this.A === 0 ? 1 : 0;
+        this.N = (this.A & 0x80) > 0 ? 1 : 0
+    }
+
+    execute(cycles: number) {
         while (cycles > 0) {
             const instruction = this.fetchByte();
             cycles--;
-
             switch (instruction) {
-                case this.INS_LDA_IM:
-                    const value = this.fetchByte();
-                    cycles--;
-                    this.A = value;
-                    this.Z = this.A === 0? 1: 0;
-                    this.N = (this.A & 0x80)>0 ? 1:0 
+                case CPU.INS_LDA_IM:
+                    {
+                        const value = this.fetchByte();
+                        cycles--;
+                        this.A = value;
+                        this.LDASetStatus();
+                    }
+                    break;
+
+                case CPU.INS_LDA_ZP:
+                    {
+                        const zeroPageAddress = this.fetchByte();
+                        cycles--;
+                        this.A = this.readByte(zeroPageAddress);
+                        cycles--;
+                        this.LDASetStatus();
+                    }
+                    break;
+
+                case CPU.INS_LDA_ZPX:
+                    {
+                        let zeroPageAddress = this.fetchByte();
+                        cycles--;
+                        zeroPageAddress += this.X;
+                        cycles--;
+                        this.A = this.readByte(zeroPageAddress);
+                        cycles--;
+                        this.LDASetStatus();
+                    }
+                    break;
+
+                default:
+                    console.log(`Instruction not handled ${instruction}`)
                 break;
             }
+
         }
     }
 }
 
 const mem = new Memory();
 const cpu = new CPU(mem);
-
 cpu.reset();
+//cpu.execute(4);
