@@ -1,11 +1,15 @@
 class Memory {
     MAX_MEM: number = 1026 * 64;
     data: Uint8Array = new Uint8Array(this.MAX_MEM);
-
+    writeWord(value:number,address:number) {
+        this.data[address] = value & 0xFF;
+        this.data[address + 1] = (value >> 8);
+    }
 }
 
 class CPU {
     memory: Memory;
+    cycles: number = 0;
 
     PC: number = 0; // Program Counter
     SP: number = 0; // Stack Pointer
@@ -26,6 +30,7 @@ class CPU {
     static INS_LDA_IM = 0xA9; //Load Accumulator Immediate
     static INS_LDA_ZP = 0xA5; //Load Accumulator Zero page
     static INS_LDA_ZPX = 0xB5; //Load Accumulator Zero page x
+    static INS_JSR = 0x20; // Jumb to Subroutine
 
     constructor(memory: Memory) {
         this.memory = memory;
@@ -41,13 +46,25 @@ class CPU {
 
     fetchByte() {
         const data = this.memory.data[this.PC];
+        this.cycles --;
         this.PC++;
         return data;
     }
 
     readByte(zeroPageAddress: number) {
         const data = this.memory.data[zeroPageAddress];
+        this.cycles--;
         return data;
+    }
+
+    fetchWord() {
+        let data = this.memory.data[this.PC];
+        this.PC++;
+        data |= (this.memory.data[this.PC] << 8);
+        this.PC++;
+        this.cycles -= 2; 
+        return data
+
     }
 
     LDASetStatus (){
@@ -56,14 +73,13 @@ class CPU {
     }
 
     execute(cycles: number) {
-        while (cycles > 0) {
+        this.cycles = cycles;
+        while (this.cycles > 0) {
             const instruction = this.fetchByte();
-            cycles--;
             switch (instruction) {
                 case CPU.INS_LDA_IM:
                     {
                         const value = this.fetchByte();
-                        cycles--;
                         this.A = value;
                         this.LDASetStatus();
                     }
@@ -72,9 +88,7 @@ class CPU {
                 case CPU.INS_LDA_ZP:
                     {
                         const zeroPageAddress = this.fetchByte();
-                        cycles--;
                         this.A = this.readByte(zeroPageAddress);
-                        cycles--;
                         this.LDASetStatus();
                     }
                     break;
@@ -82,14 +96,22 @@ class CPU {
                 case CPU.INS_LDA_ZPX:
                     {
                         let zeroPageAddress = this.fetchByte();
-                        cycles--;
                         zeroPageAddress += this.X;
-                        cycles--;
+                        this.cycles--;
                         this.A = this.readByte(zeroPageAddress);
-                        cycles--;
                         this.LDASetStatus();
                     }
                     break;
+                
+                case CPU.INS_JSR:
+                    {
+                        let subAddr = this.fetchWord();
+                        this.memory.writeWord(this.PC -1, this.SP);
+                        this.cycles -=2;
+                        this.SP ++;
+                        this.PC = subAddr;
+                        this.cycles --;
+                    }break;
 
                 default:
                     console.log(`Instruction not handled ${instruction}`)
@@ -101,6 +123,11 @@ class CPU {
 }
 
 const mem = new Memory();
+mem.data[0xFFFC] = CPU.INS_JSR;
+mem.data[0xFFFD] = 0x42;
+mem.data[0xFFFE] = 0x42;
+mem.data[0x4242] = CPU.INS_LDA_IM;
+mem.data[0x4243] = 0x84;
 const cpu = new CPU(mem);
 cpu.reset();
-//cpu.execute(4);
+cpu.execute(8);
