@@ -2,6 +2,11 @@ class Memory {
     MAX_MEM: number = 1026 * 64;
     data: Uint8Array = new Uint8Array(this.MAX_MEM);
     writeWord(value:number,address:number) {
+        // Split the 16 - bits address to save it.
+        // 11111111 0xFF
+        // 1111111111111110 0xFFFE
+        // 11111110         0xFFFE & 0xFF -> 0xFE
+        // 11111111         0xFFFE >> 8 ->   0xFF
         this.data[address] = value & 0xFF;
         this.data[address + 1] = (value >> 8);
     }
@@ -56,8 +61,13 @@ class CPU {
         this.cycles--;
         return data;
     }
-
+    // Combines the two bytes into a 16-bit word 
+    // for absolute or indirect addressing mode
     fetchWord() {
+        // exampĺe
+        // 01000010        0x42
+        // 100001000000000 0x4200  0x42 << 8
+        // 100001001000010 0x4242 (0x42 | (0x42 << 8))
         let data = this.memory.data[this.PC];
         this.PC++;
         data |= (this.memory.data[this.PC] << 8);
@@ -105,11 +115,13 @@ class CPU {
                 
                 case CPU.INS_JSR:
                     {
-                        let subAddr = this.fetchWord();
-                        this.memory.writeWord(this.PC -1, this.SP);
+                        let subAddr = this.fetchWord(); // Fetch the 16-bit subroutine address from the next two bytes.
+                        // Push the return address (address of the last byte of JSR instruction) onto the stack.
+                        // This allows RTS to return to the instruction *after* the JSR.
+                        this.memory.writeWord(this.PC -1, this.SP); 
                         this.cycles -=2;
                         this.SP ++;
-                        this.PC = subAddr;
+                        this.PC = subAddr; // Point counter to the Subroutine to execute.
                         this.cycles --;
                     }break;
 
@@ -123,11 +135,11 @@ class CPU {
 }
 
 const mem = new Memory();
-mem.data[0xFFFC] = CPU.INS_JSR;
+/* mem.data[0xFFFC] = CPU.INS_JSR;
 mem.data[0xFFFD] = 0x42;
 mem.data[0xFFFE] = 0x42;
 mem.data[0x4242] = CPU.INS_LDA_IM;
-mem.data[0x4243] = 0x84;
+mem.data[0x4243] = 0x84;  */
 const cpu = new CPU(mem);
 cpu.reset();
 cpu.execute(8);
