@@ -1,18 +1,7 @@
-class Memory {
-    MAX_MEM: number = 1026 * 64;
-    data: Uint8Array = new Uint8Array(this.MAX_MEM);
-    writeWord(value:number,address:number) {
-        // Split the 16 - bits address to save it.
-        // 11111111 0xFF
-        // 1111111111111110 0xFFFE
-        // 11111110         0xFFFE & 0xFF -> 0xFE
-        // 11111111         0xFFFE >> 8 ->   0xFF
-        this.data[address] = value & 0xFF;
-        this.data[address + 1] = (value >> 8);
-    }
-}
+import opcodes from "./opcodes";
+import { Memory } from "./Memory";
 
-class CPU {
+export class CPU {
     memory: Memory;
     cycles: number = 0;
 
@@ -31,14 +20,9 @@ class CPU {
     O: number = 1;
     N: number = 1;
 
-    //opcodes
-    static INS_LDA_IM = 0xA9; //Load Accumulator Immediate
-    static INS_LDA_ZP = 0xA5; //Load Accumulator Zero page
-    static INS_LDA_ZPX = 0xB5; //Load Accumulator Zero page x
-    static INS_JSR = 0x20; // Jumb to Subroutine
-
     constructor(memory: Memory) {
         this.memory = memory;
+        this.reset();
     }
 
     reset() {
@@ -51,7 +35,7 @@ class CPU {
 
     fetchByte() {
         const data = this.memory.data[this.PC];
-        this.cycles --;
+        this.cycles--;
         this.PC++;
         return data;
     }
@@ -72,12 +56,12 @@ class CPU {
         this.PC++;
         data |= (this.memory.data[this.PC] << 8);
         this.PC++;
-        this.cycles -= 2; 
+        this.cycles -= 2;
         return data
 
     }
 
-    LDASetStatus (){
+    LDASetStatus() {
         this.Z = this.A === 0 ? 1 : 0;
         this.N = (this.A & 0x80) > 0 ? 1 : 0
     }
@@ -87,7 +71,7 @@ class CPU {
         while (this.cycles > 0) {
             const instruction = this.fetchByte();
             switch (instruction) {
-                case CPU.INS_LDA_IM:
+                case opcodes.INS_LDA_IM:
                     {
                         const value = this.fetchByte();
                         this.A = value;
@@ -95,7 +79,7 @@ class CPU {
                     }
                     break;
 
-                case CPU.INS_LDA_ZP:
+                case opcodes.INS_LDA_ZP:
                     {
                         const zeroPageAddress = this.fetchByte();
                         this.A = this.readByte(zeroPageAddress);
@@ -103,7 +87,7 @@ class CPU {
                     }
                     break;
 
-                case CPU.INS_LDA_ZPX:
+                case opcodes.INS_LDA_ZPX:
                     {
                         let zeroPageAddress = this.fetchByte();
                         zeroPageAddress += this.X;
@@ -112,34 +96,26 @@ class CPU {
                         this.LDASetStatus();
                     }
                     break;
-                
-                case CPU.INS_JSR:
+
+                case opcodes.INS_JSR:
                     {
-                        let subAddr = this.fetchWord(); // Fetch the 16-bit subroutine address from the next two bytes.
+                        let subAddr = this.fetchWord();
+                        // Fetch the 16-bit subroutine address from the next two bytes.
                         // Push the return address (address of the last byte of JSR instruction) onto the stack.
                         // This allows RTS to return to the instruction *after* the JSR.
-                        this.memory.writeWord(this.PC -1, this.SP); 
-                        this.cycles -=2;
-                        this.SP ++;
+                        this.memory.writeWord(this.PC - 1, this.SP);
+                        this.cycles -= 2;
+                        this.SP++;
                         this.PC = subAddr; // Point counter to the Subroutine to execute.
-                        this.cycles --;
-                    }break;
+                        this.cycles--;
+                    } break;
 
                 default:
                     console.log(`Instruction not handled ${instruction}`)
-                break;
+                    break;
             }
 
         }
     }
 }
 
-const mem = new Memory();
-/* mem.data[0xFFFC] = CPU.INS_JSR;
-mem.data[0xFFFD] = 0x42;
-mem.data[0xFFFE] = 0x42;
-mem.data[0x4242] = CPU.INS_LDA_IM;
-mem.data[0x4243] = 0x84;  */
-const cpu = new CPU(mem);
-cpu.reset();
-cpu.execute(8);
