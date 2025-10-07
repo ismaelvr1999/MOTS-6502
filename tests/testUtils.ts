@@ -11,4 +11,9 @@ const runTest = (name: string, fn: () => void) => {
     }
 };
 
+const describe = (name: string, fn: ()=> void ) => {
+    fn();
+}
+
+
 export default runTest;

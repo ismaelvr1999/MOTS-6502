@@ -1,6 +1,16 @@
-import { LDAImmediateTest, LDAZeroPageTest, LDAZeroPageXTest } from "./ins_lda.test";
-import {JSRAbsoluteTest} from "./ins_jsr.test";
-import { fetchByteTest, readByteTest, fetchWordTest, writeWordTest } from "./memory_io.test";
+import {
+    LDAImmediateTest,
+    LDAZeroPageTest,
+    LDAZeroPageXTest,
+    LDAZeroPageXWrapTest
+} from "./ins_lda.test";
+import {
+    fetchByteTest,
+    readByteTest, 
+    writeWordTest,
+    fetchWordTest,
+} from "./memory_io.test";
+import { JSRAbsoluteTest } from "./ins_jsr.test";
 
 LDAImmediateTest();
 LDAZeroPageTest();
@@ -11,3 +21,4 @@ fetchByteTest();
 readByteTest();
 fetchWordTest();
 writeWordTest();
+LDAZeroPageXWrapTest();

@@ -63,7 +63,9 @@ export class CPU {
 
     LDASetStatus() {
         this.Z = this.A === 0 ? 1 : 0;
-        this.N = (this.A & 0x80) > 0 ? 1 : 0
+        //0x80 10000000
+        //0x37 00110111
+        this.N = (this.A & 0x80) > 0 ? 1 : 0;
     }
 
     execute(cycles: number) {
@@ -91,6 +93,11 @@ export class CPU {
                     {
                         let zeroPageAddress = this.fetchByte();
                         zeroPageAddress += this.X;
+                        zeroPageAddress = 
+                            zeroPageAddress > 0xFF 
+                            ? zeroPageAddress & 0xFF 
+                            : zeroPageAddress;
+
                         this.cycles--;
                         this.A = this.readByte(zeroPageAddress);
                         this.LDASetStatus();
@@ -105,7 +112,7 @@ export class CPU {
                         // This allows RTS to return to the instruction *after* the JSR.
                         this.memory.writeWord(this.PC - 1, this.SP);
                         this.cycles -= 2;
-                        this.SP++;
+                        this.SP +=2;
                         this.PC = subAddr; // Point counter to the Subroutine to execute.
                         this.cycles--;
                     } break;

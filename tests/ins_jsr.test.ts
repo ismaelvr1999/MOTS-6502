@@ -16,5 +16,6 @@ export const JSRAbsoluteTest = runTest("JSR Absolute should set Program Counter 
     let cpu = new CPU(mem);
     cpu.execute(6);
     assert.equal(cpu.PC, 0x4242);
+    assert.equal(cpu.SP, 0x102);
     assert.equal(cpu.cycles, 0);
 });
