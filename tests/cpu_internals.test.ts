@@ -17,16 +17,17 @@ export default describe("CPU internals", ()=>{
 
     test("CPU can execute more cycles than requested if required by the instruction", () => {
         const mem = new Memory();
-        const cycles = 1;
+        const reqCycles = 1;
         mem.data[0xFFFC] = opcodes.INS_LDA_IM;
         mem.data[0xFFFD] = 0x6;
         let cpu = new CPU(mem);
-        cpu.execute(cycles);
-        assert.equal(cpu.cycles, -1);
+        cpu.execute(reqCycles);
+        let cyclesUsed = Math.abs(cpu.cycles - reqCycles);
+        assert.equal(cyclesUsed, 2);
         
     });
 
-    test("CPU stop executing if there aren't more instructions", () => {
+    test("CPU stop executing if there aren't more valid instructions", () => {
         const mem = new Memory();
         mem.data[0xFFFC] = opcodes.INS_LDA_IM;
         mem.data[0xFFFD] = 0x6;
