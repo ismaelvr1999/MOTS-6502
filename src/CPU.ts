@@ -29,8 +29,8 @@ export class CPU {
         this.PC = 0xFFFC;
         this.SP = 0x0100;
         this.D = 0x0100;
-        this.C, this.Z, this.I, this.D, this.B, this.O, this.N = 0;
-        this.A, this.X, this.Y = 0;
+        this.C = 0; this.Z = 0; this.I = 0; this.D = 0; this.B = 0; this.O = 0; this.N = 0;
+        this.A = 0; this.X = 0; this.Y = 0;
     }
 
     fetchByte() {
@@ -119,6 +119,7 @@ export class CPU {
 
                 default:
                     console.log(`Instruction not handled ${instruction}`)
+                    this.cycles = 0;
                     break;
             }
 
