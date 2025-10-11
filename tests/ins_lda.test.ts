@@ -6,10 +6,10 @@ import { Memory } from "../src/Memory";
 import opcodes from "../src/opcodes";
 
 const VerifyUnmodifiedFlagsFromLDA = (cpu: CPU) => {
-        assert.equal(cpu.C, 0)
-        assert.equal(cpu.I, 0)
-        assert.equal(cpu.D, 0)
-        assert.equal(cpu.B, 0)
+    assert.equal(cpu.C, 0)
+    assert.equal(cpu.I, 0)
+    assert.equal(cpu.D, 0)
+    assert.equal(cpu.B, 0)
 }
 
 export default describe("Instruction LDA test", () => {
@@ -20,7 +20,25 @@ export default describe("Instruction LDA test", () => {
         mem.data[0xFFFD] = 0x6;
         let cpu = new CPU(mem);
         cpu.execute(2);
-        
+
+        assert.equal(cpu.A, 0x6);
+        assert.equal(cpu.Z, 0);
+        assert.equal(cpu.N, 0);
+        VerifyUnmodifiedFlagsFromLDA(cpu);
+        assert.equal(cpu.cycles, 0);
+    });
+
+    test("Absolute Address Mode can load value into the A register", () => {
+        //given
+        const mem = new Memory();
+        mem.data[0xFFFC] = opcodes.INS_LDA_ABS;
+        mem.data[0xFFFD] = 0x80;
+        mem.data[0xFFFE] = 0x44;
+        mem.data[0x4480] = 0x6
+        let cpu = new CPU(mem);
+        //when
+        cpu.execute(4);
+        //then
         assert.equal(cpu.A, 0x6);
         assert.equal(cpu.Z, 0);
         assert.equal(cpu.N, 0);
@@ -36,7 +54,7 @@ export default describe("Instruction LDA test", () => {
         mem.data[zeroPageAddress] = 0x6;
         let cpu = new CPU(mem);
         cpu.execute(3);
-        
+
         assert.equal(cpu.A, 0x6);
         assert.equal(cpu.Z, 0);
         assert.equal(cpu.N, 0);
@@ -52,7 +70,7 @@ export default describe("Instruction LDA test", () => {
         mem.data[zeroPageAddress] = 0x6; // X = 0 
         let cpu = new CPU(mem);
         cpu.execute(4);
-        
+
         assert.equal(cpu.A, 0x6);
         assert.equal(cpu.Z, 0);
         assert.equal(cpu.N, 0);
@@ -77,4 +95,6 @@ export default describe("Instruction LDA test", () => {
         VerifyUnmodifiedFlagsFromLDA(cpu);
         assert.equal(cpu.cycles, 0);
     });
+
+
 });

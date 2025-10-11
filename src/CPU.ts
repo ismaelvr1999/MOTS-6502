@@ -45,11 +45,16 @@ export class CPU {
         this.cycles--;
         return data;
     }
+    readWord(address: number) {
+        const data = this.memory.data[address];
+        this.cycles--;
+        return data;
+    }
     // Combines the two bytes into a 16-bit word 
     // for absolute or indirect addressing mode
     fetchWord() {
         // exampĺe
-        // 01000010        0x42
+        // 000000001000010 0x0042
         // 100001000000000 0x4200  0x42 << 8
         // 100001001000010 0x4242 (0x42 | (0x42 << 8))
         let data = this.memory.data[this.PC];
@@ -76,6 +81,15 @@ export class CPU {
                 case opcodes.INS_LDA_IM:
                     {
                         const value = this.fetchByte();
+                        this.A = value;
+                        this.LDASetStatus();
+                    }
+                    break;
+                
+                case opcodes.INS_LDA_ABS:
+                    {
+                        const address = this.fetchWord();
+                        const value = this.readWord(address);
                         this.A = value;
                         this.LDASetStatus();
                     }
