@@ -24,16 +24,5 @@ export default describe("CPU internals", ()=>{
         cpu.execute(reqCycles);
         let cyclesUsed = Math.abs(cpu.cycles - reqCycles);
         assert.equal(cyclesUsed, 2);
-        
-    });
-
-    test("CPU stop executing if there aren't more valid instructions", () => {
-        const mem = new Memory();
-        mem.data[0xFFFC] = opcodes.INS_LDA_IM;
-        mem.data[0xFFFD] = 0x6;
-        let cpu = new CPU(mem);
-        cpu.execute(10);
-        
-        assert.equal(cpu.cycles, 0);
     });
 });  

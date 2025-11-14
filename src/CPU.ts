@@ -45,11 +45,6 @@ export class CPU {
         this.cycles--;
         return data;
     }
-    readWord(address: number) {
-        const data = this.memory.data[address];
-        this.cycles--;
-        return data;
-    }
     // Combines the two bytes into a 16-bit word 
     // for absolute or indirect addressing mode
     fetchWord() {
@@ -85,12 +80,38 @@ export class CPU {
                         this.LDASetStatus();
                     }
                     break;
-                
+
                 case opcodes.INS_LDA_ABS:
                     {
                         const address = this.fetchWord();
-                        const value = this.readWord(address);
+                        const value = this.readByte(address);
                         this.A = value;
+                        this.LDASetStatus();
+                    }
+                    break;
+
+                case opcodes.INS_LDA_ABSX:
+                    {
+                        let absAddress = this.fetchWord();
+                        let absAddressX = absAddress + this.X;
+                        const value = this.readByte(absAddressX);
+                        this.A = value;
+                        if (absAddressX - absAddress >= 0xFF) {
+                            this.cycles--;
+                        }
+                        this.LDASetStatus();
+                    }
+                    break;
+
+                case opcodes.INS_LDA_ABSY:
+                    {
+                        let absAddress = this.fetchWord();
+                        let absAddressY = absAddress + this.Y;
+                        const value = this.readByte(absAddressY);
+                        this.A = value;
+                        if (absAddressY - absAddress >= 0xFF) {
+                            this.cycles--;
+                        }
                         this.LDASetStatus();
                     }
                     break;
@@ -107,10 +128,10 @@ export class CPU {
                     {
                         let zeroPageAddress = this.fetchByte();
                         zeroPageAddress += this.X;
-                        zeroPageAddress = 
-                            zeroPageAddress > 0xFF 
-                            ? zeroPageAddress & 0xFF 
-                            : zeroPageAddress;
+                        zeroPageAddress =
+                            zeroPageAddress > 0xFF
+                                ? zeroPageAddress & 0xFF
+                                : zeroPageAddress;
 
                         this.cycles--;
                         this.A = this.readByte(zeroPageAddress);
@@ -126,14 +147,13 @@ export class CPU {
                         // This allows RTS to return to the instruction *after* the JSR.
                         this.memory.writeWord(this.PC - 1, this.SP);
                         this.cycles -= 2;
-                        this.SP +=2;
+                        this.SP += 2;
                         this.PC = subAddr; // Point counter to the Subroutine to execute.
                         this.cycles--;
                     } break;
 
                 default:
-                    console.log(`Instruction not handled ${instruction}`)
-                    this.cycles = 0;
+                    throw new Error(`Instruction not handled 0x${instruction.toString(16)}`);
                     break;
             }
 

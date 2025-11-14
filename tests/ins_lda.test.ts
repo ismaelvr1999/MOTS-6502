@@ -73,7 +73,7 @@ export default describe("Instruction LDA test", () => {
         mem.data[0xFFFC] = opcodes.INS_LDA_ABSX;
         mem.data[0xFFFD] = 0x02;
         mem.data[0xFFFE] = 0x44;
-        mem.data[0x4501] = 0x6 // 0x4402 + crosses page boundary
+        mem.data[0x4501] = 0x6 // 0x4402 + 0xFF crosses page boundary
         let cpu = new CPU(mem);
         cpu.X = X;
         //when
