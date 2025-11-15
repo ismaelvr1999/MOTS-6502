@@ -45,13 +45,19 @@ export class CPU {
         this.cycles--;
         return data;
     }
+
+    readWord(zeroPageAddress: number) {
+        let lowByte = this.readByte(zeroPageAddress);
+        let HighByte = this.readByte(zeroPageAddress + 1);
+        return lowByte | (HighByte << 8);
+    }
     // Combines the two bytes into a 16-bit word 
     // for absolute or indirect addressing mode
     fetchWord() {
         // exampĺe
         // 000000001000010 0x0042
         // 100001000000000 0x4200  0x42 << 8
-        // 100001001000010 0x4242 (0x42 | (0x42 << 8))
+        // 100001001000010 0x4242 (0x42 | (0x0042 << 8))
         let data = this.memory.data[this.PC];
         this.PC++;
         data |= (this.memory.data[this.PC] << 8);
@@ -138,6 +144,25 @@ export class CPU {
                         this.LDASetStatus();
                     }
                     break;
+                case opcodes.INS_LDA_INDX:
+                    {
+                        let zpAddress = this.fetchByte();
+                        zpAddress += this.X;
+                        this.cycles--;
+                        let effectiveAddress = this.readWord(zpAddress);
+                        this.A = this.readByte(effectiveAddress);
+                        this.LDASetStatus();
+                    } break;
+                case opcodes.INS_LDA_INDY: {
+                    let zpAddress = this.fetchByte();
+                    let effectiveAddress = this.readWord(zpAddress);
+                    let effectiveAddressY = effectiveAddress + this.Y;
+                    this.A = this.readByte(effectiveAddressY);
+                    if (effectiveAddressY - effectiveAddress >= 0xFF) {
+                        this.cycles--;
+                    }
+                    this.LDASetStatus();
+                } break;
 
                 case opcodes.INS_JSR:
                     {
